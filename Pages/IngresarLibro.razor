@@ -1,4 +1,5 @@
-﻿
+﻿@page "/IngresarLibro"
+
 <h3>Ingresar Nuevo Libro</h3>
 @using LabNegocioLibros.Clases
 
@@ -42,8 +43,7 @@
 @code {
     Libro nuevoLibro = new Libro();
 
-    [Inject]
-    private LibroService libroService { get; set; }
+    private LibroService libroService = new LibroService();
 
     private void AgregarLibro()
     {
