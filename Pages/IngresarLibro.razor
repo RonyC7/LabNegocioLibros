@@ -1,53 +1,168 @@
 ﻿@page "/IngresarLibro"
-
-<h3>Ingresar Nuevo Libro</h3>
 @using LabNegocioLibros.Clases
+@inject IJSRuntime JSRuntime
+@using System.Text.Json;
 
 
-<div>
-    <label>Código:</label>
-    <input @bind="nuevoLibro.Codigo" />
+<h3 class="text-center">Ingresar Nuevo Libro</h3>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="codigo">Código:</label>
+                        <input id="codigo" class="form-control" @bind="nuevoLibro.Codigo" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="nombre">Nombre:</label>
+                        <input id="nombre" class="form-control" @bind="nuevoLibro.Nombre" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="descripcion">Descripción:</label>
+                        <textarea id="descripcion" class="form-control" @bind="nuevoLibro.Descripcion" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="precioCompra">Precio de Compra:</label>
+                        <input id="precioCompra" type="number" class="form-control" @bind="nuevoLibro.PrecioCompra" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="precioVenta">Precio de Venta:</label>
+                        <input id="precioVenta" type="number" class="form-control" @bind="nuevoLibro.PrecioVenta" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="editorial">Editorial:</label>
+                        <input id="editorial" class="form-control" @bind="nuevoLibro.Editorial" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="categoria">Categoría:</label>
+                        <input id="categoria" class="form-control" @bind="nuevoLibro.Categoria" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="autor">Autor:</label>
+                        <input id="autor" class="form-control" @bind="nuevoLibro.Autor" required />
+                    </div>
+                    <button class="btn btn-outline-primary" @onclick="AgregarLibro" disabled="@(!ValidarFormulario())">Agregar Libro</button>
+                    @if (libroAgregado)
+                    {
+                        <p class="text-success mt-2">Libro agregado correctamente</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-<div>
-    <label>Nombre:</label>
-    <input @bind="nuevoLibro.Nombre" />
-</div>
-<div>
-    <label>Descripción:</label>
-    <textarea @bind="nuevoLibro.Descripcion"></textarea>
-</div>
-<div>
-    <label>Precio de Compra:</label>
-    <input type="number" @bind="nuevoLibro.PrecioCompra" />
-</div>
-<div>
-    <label>Precio de Venta:</label>
-    <input type="number" @bind="nuevoLibro.PrecioVenta" />
-</div>
-<div>
-    <label>Editorial:</label>
-    <input @bind="nuevoLibro.Editorial" />
-</div>
-<div>
-    <label>Categoría:</label>
-    <input @bind="nuevoLibro.Categoria" />
-</div>
-<div>
-    <label>Autor:</label>
-    <input @bind="nuevoLibro.Autor" />
-</div>
-<div>
-    <button @onclick="AgregarLibro">Agregar Libro</button>
-</div>
+
+@if (libros.Count > 0)
+{
+    <h3 class="text-center mt-4">Libros Agregados</h3>
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered mt-2">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Código</th>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Precio de Compra</th>
+                    <th>Precio de Venta</th>
+                    <th>Editorial</th>
+                    <th>Categoría</th>
+                    <th>Autor</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var libro in libros)
+                {
+                    <tr>
+                        <td>@libro.Codigo</td>
+                        <td>@libro.Nombre</td>
+                        <td>@libro.Descripcion</td>
+                        <td>@libro.PrecioCompra</td>
+                        <td>@libro.PrecioVenta</td>
+                        <td>@libro.Editorial</td>
+                        <td>@libro.Categoria</td>
+                        <td>@libro.Autor</td>
+                        <td>
+                            <button class="btn btn-warning btn-sm" @onclick="() => EditarLibro(libro)">Editar</button>
+                            <button class="btn btn-danger btn-sm" @onclick="() => ConfirmarEliminarLibro(libro)">Eliminar</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
 
 @code {
     Libro nuevoLibro = new Libro();
+    bool libroAgregado = false;
 
     private LibroService libroService = new LibroService();
+
+    private List<Libro> libros = new List<Libro>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Cargar libros desde el almacenamiento local al iniciar la página
+        libros = await ObtenerLibrosDesdeAlmacenamientoLocal();
+    }
+
+    private async Task<List<Libro>> ObtenerLibrosDesdeAlmacenamientoLocal()
+    {
+        var librosJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "libros");
+        if (!string.IsNullOrEmpty(librosJson))
+        {
+            return JsonSerializer.Deserialize<List<Libro>>(librosJson);
+        }
+        return new List<Libro>();
+    }
+
+    private async Task GuardarLibrosEnAlmacenamientoLocal()
+    {
+        var librosJson = JsonSerializer.Serialize(libros);
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "libros", librosJson);
+    }
+
+    private bool ValidarFormulario()
+    {
+        return !string.IsNullOrEmpty(nuevoLibro.Codigo) &&
+               !string.IsNullOrEmpty(nuevoLibro.Nombre) &&
+               !string.IsNullOrEmpty(nuevoLibro.Descripcion) &&
+               nuevoLibro.PrecioCompra > 0 &&
+               nuevoLibro.PrecioVenta > 0 &&
+               !string.IsNullOrEmpty(nuevoLibro.Editorial) &&
+               !string.IsNullOrEmpty(nuevoLibro.Categoria) &&
+               !string.IsNullOrEmpty(nuevoLibro.Autor);
+    }
 
     private void AgregarLibro()
     {
         libroService.AgregarLibro(nuevoLibro);
-        nuevoLibro = new Libro(); 
+        libros = libroService.ObtenerLibros();
+        nuevoLibro = new Libro();
+        libroAgregado = true;
+        Task.Delay(3000).ContinueWith(_ =>
+        {
+            libroAgregado = false;
+            StateHasChanged();
+        });
+        GuardarLibrosEnAlmacenamientoLocal(); 
+    }
+
+    private void EditarLibro(Libro libro)
+    {
+        // Lógica para editar el libro
+    }
+
+    private async Task ConfirmarEliminarLibro(Libro libro)
+    {
+        var confirmacion = await JSRuntime.InvokeAsync<bool>("confirm", "¿Está seguro de eliminar el libro?");
+        if (confirmacion)
+        {
+            libros.Remove(libro);
+            await GuardarLibrosEnAlmacenamientoLocal(); 
+            StateHasChanged();
+        }
     }
 }
