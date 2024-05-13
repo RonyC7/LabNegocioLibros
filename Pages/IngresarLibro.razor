@@ -1,5 +1,53 @@
-﻿<h3>IngresarLibro</h3>
+﻿
+<h3>Ingresar Nuevo Libro</h3>
+@using LabNegocioLibros.Clases
+
+
+<div>
+    <label>Código:</label>
+    <input @bind="nuevoLibro.Codigo" />
+</div>
+<div>
+    <label>Nombre:</label>
+    <input @bind="nuevoLibro.Nombre" />
+</div>
+<div>
+    <label>Descripción:</label>
+    <textarea @bind="nuevoLibro.Descripcion"></textarea>
+</div>
+<div>
+    <label>Precio de Compra:</label>
+    <input type="number" @bind="nuevoLibro.PrecioCompra" />
+</div>
+<div>
+    <label>Precio de Venta:</label>
+    <input type="number" @bind="nuevoLibro.PrecioVenta" />
+</div>
+<div>
+    <label>Editorial:</label>
+    <input @bind="nuevoLibro.Editorial" />
+</div>
+<div>
+    <label>Categoría:</label>
+    <input @bind="nuevoLibro.Categoria" />
+</div>
+<div>
+    <label>Autor:</label>
+    <input @bind="nuevoLibro.Autor" />
+</div>
+<div>
+    <button @onclick="AgregarLibro">Agregar Libro</button>
+</div>
 
 @code {
+    Libro nuevoLibro = new Libro();
 
+    [Inject]
+    private LibroService libroService { get; set; }
+
+    private void AgregarLibro()
+    {
+        libroService.AgregarLibro(nuevoLibro);
+        nuevoLibro = new Libro(); 
+    }
 }
