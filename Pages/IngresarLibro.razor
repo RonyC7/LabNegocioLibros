@@ -3,7 +3,6 @@
 @inject IJSRuntime JSRuntime
 @using System.Text.Json;
 
-
 <h3 class="text-center">Ingresar Nuevo Libro</h3>
 <div class="container">
     <div class="row justify-content-center">
@@ -53,50 +52,103 @@
     </div>
 </div>
 
-@if (libros.Count > 0)
-{
-    <h3 class="text-center mt-4">Libros Agregados</h3>
-    <div class="table-responsive">
-        <table class="table table-striped table-bordered mt-2">
-            <thead class="thead-dark">
+<h3 class="text-center mt-4">Libros Agregados</h3>
+<div class="table-responsive">
+    <table class="table table-striped table-bordered mt-2">
+        <thead class="thead-dark">
+            <tr>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Precio de Compra</th>
+                <th>Precio de Venta</th>
+                <th>Editorial</th>
+                <th>Categoría</th>
+                <th>Autor</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var libro in libros)
+            {
                 <tr>
-                    <th>Código</th>
-                    <th>Nombre</th>
-                    <th>Descripción</th>
-                    <th>Precio de Compra</th>
-                    <th>Precio de Venta</th>
-                    <th>Editorial</th>
-                    <th>Categoría</th>
-                    <th>Autor</th>
-                    <th>Acciones</th>
+                    <td>@libro.Codigo</td>
+                    <td>@libro.Nombre</td>
+                    <td>@libro.Descripcion</td>
+                    <td>@libro.PrecioCompra</td>
+                    <td>@libro.PrecioVenta</td>
+                    <td>@libro.Editorial</td>
+                    <td>@libro.Categoria</td>
+                    <td>@libro.Autor</td>
+                    <td>
+                        <button class="btn btn-outline-warning" @onclick="() => EditarLibro(libro)">Editar</button>
+                        <button class="btn btn-outline-danger" @onclick="() => ConfirmarEliminarLibro(libro)">Eliminar</button>
+                    </td>
                 </tr>
-            </thead>
-            <tbody>
-                @foreach (var libro in libros)
-                {
-                    <tr>
-                        <td>@libro.Codigo</td>
-                        <td>@libro.Nombre</td>
-                        <td>@libro.Descripcion</td>
-                        <td>@libro.PrecioCompra</td>
-                        <td>@libro.PrecioVenta</td>
-                        <td>@libro.Editorial</td>
-                        <td>@libro.Categoria</td>
-                        <td>@libro.Autor</td>
-                        <td>
-                            <button class="btn btn-warning btn-sm" @onclick="() => EditarLibro(libro)">Editar</button>
-                            <button class="btn btn-danger btn-sm" @onclick="() => ConfirmarEliminarLibro(libro)">Eliminar</button>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (editarLibro != null)
+{
+    <div class="modal fade show" id="editarLibroModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" style="display: block; background: rgba(0,0,0,0.5)">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Editar Libro</h5>
+                    <button type="" class="close" @onclick="CerrarModal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="codigoEdit">Código:</label>
+                        <input id="codigoEdit" class="form-control" @bind="libroEditado.Codigo" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="nombreEdit">Nombre:</label>
+                        <input id="nombreEdit" class="form-control" @bind="libroEditado.Nombre" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="descripcionEdit">Descripción:</label>
+                        <textarea id="descripcionEdit" class="form-control" @bind="libroEditado.Descripcion" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="precioCompraEdit">Precio de Compra:</label>
+                        <input id="precioCompraEdit" type="number" class="form-control" @bind="libroEditado.PrecioCompra" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="precioVentaEdit">Precio de Venta:</label>
+                        <input id="precioVentaEdit" type="number" class="form-control" @bind="libroEditado.PrecioVenta" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="editorialEdit">Editorial:</label>
+                        <input id="editorialEdit" class="form-control" @bind="libroEditado.Editorial" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="categoriaEdit">Categoría:</label>
+                        <input id="categoriaEdit" class="form-control" @bind="libroEditado.Categoria" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="autorEdit">Autor:</label>
+                        <input id="autorEdit" class="form-control" @bind="libroEditado.Autor" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-dark" @onclick="CerrarModal">Cancelar</button>
+                    <button type="button" class="btn btn-outline-info" @onclick="GuardarCambios">Guardar Cambios</button>
+                </div>
+            </div>
+        </div>
     </div>
 }
 
 @code {
     Libro nuevoLibro = new Libro();
+    Libro libroEditado = new Libro();
     bool libroAgregado = false;
+    Libro editarLibro;
 
     private LibroService libroService = new LibroService();
 
@@ -104,7 +156,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Cargar libros desde el almacenamiento local al iniciar la página
         libros = await ObtenerLibrosDesdeAlmacenamientoLocal();
     }
 
@@ -139,7 +190,7 @@
     private void AgregarLibro()
     {
         libroService.AgregarLibro(nuevoLibro);
-        libros = libroService.ObtenerLibros();
+        libros.Add(nuevoLibro);
         nuevoLibro = new Libro();
         libroAgregado = true;
         Task.Delay(3000).ContinueWith(_ =>
@@ -148,11 +199,6 @@
             StateHasChanged();
         });
         GuardarLibrosEnAlmacenamientoLocal(); 
-    }
-
-    private void EditarLibro(Libro libro)
-    {
-        // Lógica para editar el libro
     }
 
     private async Task ConfirmarEliminarLibro(Libro libro)
@@ -165,4 +211,34 @@
             StateHasChanged();
         }
     }
+
+    private void EditarLibro(Libro libro)
+    {
+        editarLibro = libro;
+        libroEditado = new Libro
+            {
+                Codigo = libro.Codigo,
+                Nombre = libro.Nombre,
+                Descripcion = libro.Descripcion,
+                PrecioCompra = libro.PrecioCompra,
+                PrecioVenta = libro.PrecioVenta,
+                Editorial = libro.Editorial,
+                Categoria = libro.Categoria,
+                Autor = libro.Autor
+            };
+        AbrirModal();
+    }
+
+    private async void GuardarCambios()
+    {
+        var index = libros.FindIndex(l => l.Codigo == editarLibro.Codigo);
+        libros[index] = libroEditado;
+        await GuardarLibrosEnAlmacenamientoLocal(); 
+        editarLibro = null;
+        CerrarModal();
+        StateHasChanged();
+    }
+
+    private void AbrirModal() => JSRuntime.InvokeVoidAsync("$('#editarLibroModal').modal('show');");
+    private void CerrarModal() => JSRuntime.InvokeVoidAsync("$('#editarLibroModal').modal('hide');");
 }
